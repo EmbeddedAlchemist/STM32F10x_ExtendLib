@@ -1,4 +1,4 @@
-#include "STM32F10x_ExternLib_AnalogServo.h"
+#include "ExtendLib_AnalogServo.h"
 
 /**
  * @brief 初始化并生成一个模拟舵机对象
@@ -13,9 +13,9 @@
  */
 AnalogServo_Object AnalogServo_Initilize(PWM_Object PWM,
                                          uint32_t signalCycle,
-                                         int32_t minAngel,
+                                         float minAngel,
                                          uint32_t minAngelSignalTime,
-                                         int32_t maxAngel,
+                                         float maxAngel,
                                          uint32_t maxAngelSignalTime) {
     AnalogServo_Object newAnalogServoObj = (AnalogServo_Object)MeM_Request(sizeof(struct AnalogServo_TypeDef));
     newAnalogServoObj->PWM = PWM;
@@ -51,7 +51,7 @@ AnalogServo_Object AnalogServo_Initilize(PWM_Object PWM,
  * 
  * @param servo 指定一个模拟舵机对象
  */
-int32_t AnalogServo_GetAngel(AnalogServo_Object servo){
+float AnalogServo_GetAngel(AnalogServo_Object servo){
     return servo->angel;
 }
 
@@ -61,7 +61,7 @@ int32_t AnalogServo_GetAngel(AnalogServo_Object servo){
  * @param servo 指定一个模拟舵机对象
  * @param angel 指定角度
  */
-void AnalogServo_SetAngel(AnalogServo_Object servo,int32_t angel){
+void AnalogServo_SetAngel(AnalogServo_Object servo,float angel){
     if(angel<servo->minAngel)
         angel = servo->minAngel;
     else if(angel>servo->maxAngel)
@@ -77,6 +77,6 @@ void AnalogServo_SetAngel(AnalogServo_Object servo,int32_t angel){
  * @param servo 指定一个模拟舵机对象
  * @param angel 指定角度，正增负减
  */
-void AnalogServo_RotateAngel(AnalogServo_Object servo,int32_t angel){
+void AnalogServo_RotateAngel(AnalogServo_Object servo,float angel){
     AnalogServo_SetAngel(servo, servo->angel + angel);
 }

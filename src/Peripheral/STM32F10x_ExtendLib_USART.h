@@ -1,7 +1,7 @@
 #ifndef _USART_H_
 #define _USART_H_
 
-#include "STM32F10x_ExternLib.h"
+#include "STM32F10x_ExtendLib.h"
 //串口缓存数据块大小
 #define USART_BUFFER_BLOCK_SIZE 32
 //串口高速缓冲大小，当读数据时普通缓冲不能写入时，会临时使用高速缓冲，调大缓冲块大小可以改善这一现象
@@ -44,10 +44,12 @@ typedef struct USART_PeriphTypedef{
     uint8_t highSpeedBuffer[USART_HIGN_SPEED_BUFFER_SIZE];
     bool useHighSpeedBuffer;
     unsigned int highSpeedBufferEndPos;
+    void (*receiveInterrupt)(GenericObject);
+    GenericObject receiveInterruptParam;
 } *USART_Object;
 
 
-USART_Object USART_Initialize(USART_TypeDef *USARTx, uint32_t BaudRate, uint16_t WordLength, uint16_t Parity, uint16_t StopBit, uint8_t ITPreemptionPriority, uint8_t ITSubPriority);
+USART_Object USART_Initialize(USART_TypeDef *USARTx, uint32_t BaudRate, uint16_t WordLength, uint16_t Parity, uint16_t StopBit, uint8_t ITPreemptionPriority, uint8_t ITSubPriorityvoid ,void (*receiveInterrupt)(GenericObject), GenericObject receiveInterruptParam);
 void USART_Write(USART_Object USARTPeriph, uint8_t dat);
 uint8_t USART_Read(USART_Object USARTPeriph);
 bool USART_DataAvaliable(USART_Object USARTPeriph);

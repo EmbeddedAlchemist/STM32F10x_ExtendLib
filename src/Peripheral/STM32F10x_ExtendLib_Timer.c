@@ -1,4 +1,6 @@
-#include "STM32F10x_ExternLib_Timer.h"
+#include "STM32F10x_ExtendLib_Timer.h"
+#include "ExtendLibDefinition.h"
+#include "MemoryManage.h"
 
 static TIM_Object TIM1Periph, TIM2Periph, TIM3Periph, TIM4Periph, TIM5Periph,
     TIM6Periph, TIM7Periph, TIM8Periph, TIM9Periph, TIM10Periph,
@@ -132,7 +134,7 @@ TIM_Object TIM_InitializeAdvance(TIM_TypeDef *TIMx, uint16_t period, uint16_t pr
     if (*selectedTIM) {                 //之前被初始化过
         TIM_Deinitialize(*selectedTIM); //清除之前的初始化
     }
-    *selectedTIM = (TIM_Object)MeM_Request(sizeof(struct TIM_PeriphTypeDef)); //创建新对象
+    *selectedTIM = ExtendLib_NewObject(TIM_Object); //创建新对象
     if (!*selectedTIM) {                                                        //创建失败
         return NULL;
     }
@@ -188,7 +190,7 @@ TIM_Object TIM_Initialize(TIM_TypeDef *TIMx, unsigned int interval, void (*inter
  * @param TIMx 
  */
 TIM_Object TIM_GenerateUninitialize(TIM_TypeDef *TIMx,uint8_t IRQn_Channel){
-    TIM_Object newTimerObject = (TIM_Object)MeM_Request(sizeof(struct TIM_PeriphTypeDef));
+    TIM_Object newTimerObject = ExtendLib_NewObject(TIM_Object);
     newTimerObject->TIMx = TIMx;
     newTimerObject->IRQn_Channel = IRQn_Channel;
     return newTimerObject;

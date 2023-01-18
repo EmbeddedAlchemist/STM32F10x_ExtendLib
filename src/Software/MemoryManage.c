@@ -12,7 +12,7 @@ typedef struct MeM_BlockHead {
 } MeM_BlockHead;
 
 //内存池
-__align(32) volatile static uint32_t MeM_MemoryPool[MeM_MEMORY_POOL_SIZE/sizeof(uint32_t)];
+__align(32) volatile static uint32_t MeM_MemoryPool[MEMORY_MANAGE_POOL_SIZE/sizeof(uint32_t)];
 
 /**
  * @brief 整理内存碎片
@@ -46,7 +46,7 @@ void *MeM_Request_Base(size_t size) {
     MeM_BlockHead *curBlock = (MeM_BlockHead *)MeM_MemoryPool;
     void *rtnAddr = NULL; //返回可用的地址
 
-#ifdef MeM_MEMORY_REQUEST_STRATEGY_FAST_SPEED
+#ifdef MEMORY_MANAGE_MEMORY_REQUEST_STRATEGY_FAST_SPEED
     while (curBlock) {
         if (curBlock->available == false || curBlock->size < size) {
             curBlock = curBlock->next;
@@ -56,9 +56,9 @@ void *MeM_Request_Base(size_t size) {
     }
 #endif
 
-#ifdef MeM_MEMORY_REQUEST_STRATEGY_LESS_FRAGMENTATION
+#ifdef MEMORY_MAMAGE_MEMORY_REQUEST_STRATEGY_LESS_FRAGMENTATION
     MeM_BlockHead *bestBlock = NULL;
-    size_t bestBlockSize = MeM_MEMORY_POOL_SIZE;
+    size_t bestBlockSize = MEMORY_MANAGE_POOL_SIZE;
     while (curBlock) {
         if (curBlock->available == true && curBlock->size >= size) { //找到一块可用
             if(curBlock.size==size){//刚刚好！就是它了
@@ -103,7 +103,7 @@ void *MeM_Request_Base(size_t size) {
  */
 void *MeM_Request(size_t size) {
     //实际需要申请的空间大小，包含块头数据，申请的内存大小实际是块大小的整数倍,下面一行就是对齐整数倍用的...不需要太理解，反正最后结果是最接近但不小于实际值的块大小整数倍就是了
-    size_t actSize = ((size + sizeof(MeM_BlockHead)) / MeM_MEMORY_BLOCK_SIZE + MeM_MEMORY_REQUEST_TAIL + (((size + sizeof(MeM_BlockHead)) % MeM_MEMORY_BLOCK_SIZE == 0) ? 0 : 1)) * MeM_MEMORY_BLOCK_SIZE;
+    size_t actSize = ((size + sizeof(MeM_BlockHead)) / MEMORY_MANAGE_BLOCK_SIZE + MEMORY_MANAGE_MEMORY_REQUEST_TAIL + (((size + sizeof(MeM_BlockHead)) % MEMORY_MANAGE_BLOCK_SIZE == 0) ? 0 : 1)) * MEMORY_MANAGE_BLOCK_SIZE;
     void *rtnAddr = NULL; //返回可用的地址
     rtnAddr = MeM_Request_Base(actSize);
     if (rtnAddr == NULL) {                   //没找到可用的块
@@ -131,7 +131,7 @@ void MeM_Init() {
     MeM_BlockHead initHead;
     initHead.available = true;
     initHead.next = NULL;
-    initHead.size = MeM_MEMORY_POOL_SIZE;
+    initHead.size = MEMORY_MANAGE_POOL_SIZE;
     MeM_BlockHead *poolHead = (MeM_BlockHead *)&MeM_MemoryPool[0];
     *poolHead = initHead; //"开个好头"
 }

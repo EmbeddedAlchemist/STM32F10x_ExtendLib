@@ -1,6 +1,6 @@
-#include "STM32F10x_ExternLib_GPIO.h"
+#include "STM32F10x_ExtendLib_GPIO.h"
+#include "ExtendLibDefinition.h"
 #include "MemoryManage.h"
-
 /**
  * @brief 初始化GPIO端口
  * 
@@ -8,9 +8,9 @@
  * @param GPIO_Pin_x 指定【一个】GPIO端口，例如GPIO_Pin_0,不能使用或运算
  * @param GPIO_Mode GPIO模式
  * @param GPIO_Speed GPIO速度
- * @return GPIO_PeriphTypeDef* 初始化完毕的对象
+ * @return GPIO_Object_TypeDef* 初始化完毕的对象
  */
-GPIO_Object GPIO_Initialize(GPIO_TypeDef *GPIOx, uint16_t , GPIOMode_TypeDef GPIO_Mode, GPIOSpeed_TypeDef GPIO_Speed) {
+GPIO_Object GPIO_Initialize(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin_x, GPIOMode_TypeDef GPIO_Mode, GPIOSpeed_TypeDef GPIO_Speed) {
     switch ((intptr_t)GPIOx) {
         case (intptr_t)GPIOA: {
             RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
@@ -65,7 +65,7 @@ GPIO_Object GPIO_Initialize(GPIO_TypeDef *GPIOx, uint16_t , GPIOMode_TypeDef GPI
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
     }
 
-   GPIO_Object newGPIOPeriph = (GPIO_Object)MeM_Request(sizeof(struct GPIO_PeriphTypeDef));
+   GPIO_Object newGPIOPeriph = (GPIO_Object)MeM_Request(sizeof(struct GPIO_Object_TypeDef));
     if(!newGPIOPeriph){//创建对象失败
         return NULL;
     }
@@ -126,7 +126,7 @@ GPIO_Object GPIO_GenerateUninitialize(GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin_x){
             return EmptyObject;
         }
     }
-    GPIO_Object newGPIOPeriph = (GPIO_Object)MeM_Request(sizeof(struct GPIO_PeriphTypeDef));
+    GPIO_Object newGPIOPeriph = (GPIO_Object)MeM_Request(sizeof(struct GPIO_Object_TypeDef));
     if(!newGPIOPeriph){//创建对象失败
         return EmptyObject;
     }
@@ -212,7 +212,7 @@ void GPIO_InitializeObject(GPIO_Object GPIO_Periph, GPIOMode_TypeDef GPIO_Mode, 
  * @param GPIO_Periph GPIO对象
  * @param val 0或非0
  */
-void GPIO_WritePin(GPIO_Object GPIO_Periph,unsigned int val){
+__inline void GPIO_WritePin(GPIO_Object GPIO_Periph,unsigned int val){
     GPIO_WriteBit(GPIO_Periph->GPIOx, GPIO_Periph->GPIO_Pin_x, (BitAction) !!val);
 }
 
@@ -222,7 +222,7 @@ void GPIO_WritePin(GPIO_Object GPIO_Periph,unsigned int val){
  * @param GPIO_Periph 
  * @return uint8_t 
  */
-uint8_t GPIO_ReadPinInput(GPIO_Object GPIO_Periph){
+__inline uint8_t GPIO_ReadPinInput(GPIO_Object GPIO_Periph){
     return GPIO_ReadInputDataBit(GPIO_Periph->GPIOx, GPIO_Periph->GPIO_Pin_x);
 }
 
@@ -232,6 +232,7 @@ uint8_t GPIO_ReadPinInput(GPIO_Object GPIO_Periph){
  * @param GPIO_Periph 
  * @return uint8_t 
  */
-uint8_t GPIO_ReadPinOutPut(GPIO_Object GPIO_Periph){
+__inline uint8_t GPIO_ReadPinOutput(GPIO_Object GPIO_Periph){
     return GPIO_ReadOutputDataBit(GPIO_Periph->GPIOx, GPIO_Periph->GPIO_Pin_x);
 }
+

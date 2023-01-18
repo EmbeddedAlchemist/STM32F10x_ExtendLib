@@ -1,4 +1,4 @@
-#include "STM32F10x_ExternLib_USART.h"
+#include "STM32F10x_ExtendLib_USART.h"
 #include "stdlib.h"
 #include "string.h"
 
@@ -103,7 +103,7 @@ void USART_ReadBufferWrite(USART_Object USARTPeriph, uint8_t dat) {
     USARTPeriph->readBufferEndPos++;
     if (USARTPeriph->readBufferEndPos == USART_BUFFER_BLOCK_SIZE) {                                               //一个块写完
         USARTPeriph->useHighSpeedBuffer = true;                                                                   //申请新块可能需要时间，此时接收到的数据先存入高速缓存中
-        USARTPeriph->readBufferTail->next = (USART_BufferBlockTypedef *)malloc(sizeof(USART_BufferBlockTypedef)); //申请新块
+        USARTPeriph->readBufferTail->next = (USART_BufferBlockTypedef *)MeM_Request(sizeof(USART_BufferBlockTypedef)); //申请新块
         if (!USARTPeriph->readBufferTail->next) {
             USARTPeriph->useHighSpeedBuffer = false; //恢复正常缓冲模式
             return;                                  //申请不到新块，摆大烂
@@ -134,7 +134,7 @@ uint8_t USART_ReadBufferRead(USART_Object USARTPeriph) {
             USART_BufferBlockTypedef *oldBlock = USARTPeriph->readBufferHead;
             USARTPeriph->readBufferHead = USARTPeriph->readBufferHead->next; //指向下一节点
             USARTPeriph->readBufferCurPos = 0;
-            free(oldBlock);
+            MeM_Release(oldBlock);
         }
     }
     return dat;
@@ -154,7 +154,7 @@ void USART_WriteBufferWrite(USART_Object USARTPeriph, const uint8_t *dat, unsign
         USARTPeriph->writeBufferTail->buffer[USARTPeriph->writeBufferEndPos] = dat[i];
         USARTPeriph->writeBufferEndPos++;
         if (USARTPeriph->writeBufferEndPos == USART_BUFFER_BLOCK_SIZE) {                                               //一个块写完
-            USARTPeriph->writeBufferTail->next = (USART_BufferBlockTypedef *)malloc(sizeof(USART_BufferBlockTypedef)); //申请新块
+            USARTPeriph->writeBufferTail->next = (USART_BufferBlockTypedef *)MeM_Request(sizeof(USART_BufferBlockTypedef)); //申请新块
             if (!USARTPeriph->writeBufferTail->next) {
                 USART_StartWrite(USARTPeriph); //写完之前剩下的数据
                 return;                        //申请不到新块，放弃写入数据
@@ -181,7 +181,7 @@ uint8_t USART_WriteBufferRead(USART_Object USARTPeriph) {
             USART_BufferBlockTypedef *oldBlock = USARTPeriph->writeBufferHead;
             USARTPeriph->writeBufferHead = USARTPeriph->writeBufferHead->next; //指向下一节点
             USARTPeriph->writeBufferCurPos = 0;
-            free(oldBlock);
+            MeM_Release(oldBlock);
         }
     }
     return dat;
@@ -226,17 +226,17 @@ void USART_WriteStr(USART_Object USARTPeriph, const char *str) {
 
 /**
  * @brief 初始化并生成一个USART对象
- * 
+ *
  * @param USARTx 指定一个USART外设
  * @param BaudRate 比特率
  * @param WordLength 字长
- * @param Parity 
+ * @param Parity
  * @param StopBit 停止位
  * @param ITPreemptionPriority 中断主优先级
  * @param ITSubPriority 中断从优先级
- * @return USART_PeriphTypedef* 
+ * @return USART_PeriphTypedef*
  */
-USART_Object USART_Initialize(USART_TypeDef *USARTx, uint32_t BaudRate, uint16_t WordLength, uint16_t Parity, uint16_t StopBit, uint8_t ITPreemptionPriority, uint8_t ITSubPriority) {
+USART_Object USART_Initialize(USART_TypeDef *USARTx, uint32_t BaudRate, uint16_t WordLength, uint16_t Parity, uint16_t StopBit, uint8_t ITPreemptionPriority, uint8_t ITSubPriority, void (*receiveInterrupt)(GenericObject), GenericObject receiveInterruptParam) {
     GPIO_InitTypeDef GPIO_Tx_InitData, GPIO_Rx_InitData;
     USART_InitTypeDef USART_InitData;
     NVIC_InitTypeDef NVIC_InitData;
@@ -301,10 +301,12 @@ USART_Object USART_Initialize(USART_TypeDef *USARTx, uint32_t BaudRate, uint16_t
     (*selectedUSARTPeriph)->useHighSpeedBuffer = false;
     (*selectedUSARTPeriph)->highSpeedBufferEndPos = 0;
     (*selectedUSARTPeriph)->stopPendingBit = false;
-    (*selectedUSARTPeriph)->readBufferCurPos = (*selectedUSARTPeriph)->readBufferEndPos = 0;                                    //重置字节指针
-    (*selectedUSARTPeriph)->readBufferHead = (*selectedUSARTPeriph)->readBufferTail = malloc(sizeof(USART_BufferBlockTypedef)); //分配缓存
-    (*selectedUSARTPeriph)->writeBufferCurPos = (*selectedUSARTPeriph)->writeBufferEndPos = 0;                                                    //重置字节指针
-    (*selectedUSARTPeriph)->writeBufferHead = (*selectedUSARTPeriph)->writeBufferTail = malloc(sizeof(USART_BufferBlockTypedef));                 //分配缓存
+    (*selectedUSARTPeriph)->readBufferCurPos = (*selectedUSARTPeriph)->readBufferEndPos = 0;                                      //重置字节指针
+    (*selectedUSARTPeriph)->readBufferHead = (*selectedUSARTPeriph)->readBufferTail = MeM_Request(sizeof(USART_BufferBlockTypedef));   //分配缓存
+    (*selectedUSARTPeriph)->writeBufferCurPos = (*selectedUSARTPeriph)->writeBufferEndPos = 0;                                    //重置字节指针
+    (*selectedUSARTPeriph)->writeBufferHead = (*selectedUSARTPeriph)->writeBufferTail = MeM_Request(sizeof(USART_BufferBlockTypedef)); //分配缓存
+    (*selectedUSARTPeriph)->receiveInterrupt = receiveInterrupt;
+    (*selectedUSARTPeriph)->receiveInterruptParam = receiveInterruptParam;
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
     NVIC_Init(&NVIC_InitData);
     USART_Init((*selectedUSARTPeriph)->USARTx, &USART_InitData);
@@ -321,6 +323,8 @@ void USART_IRQHandler(USART_Object USARTPeriph) {
     if (USART_GetITStatus(USARTPeriph->USARTx, USART_IT_RXNE) == SET) { // RI
         USART_ClearITPendingBit(USARTPeriph->USARTx, USART_IT_RXNE);
         USART_Read_Base(USARTPeriph);
+        if (USARTPeriph->receiveInterrupt)
+            USARTPeriph->receiveInterrupt(USARTPeriph->receiveInterruptParam);
     }
     if (USART_GetITStatus(USARTPeriph->USARTx, USART_IT_TC) == SET) { // TI
         USART_ClearITPendingBit(USARTPeriph->USARTx, USART_IT_TC);

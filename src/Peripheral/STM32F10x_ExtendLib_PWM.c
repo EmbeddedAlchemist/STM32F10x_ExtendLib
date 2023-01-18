@@ -1,5 +1,5 @@
-#include "STM32F10x_ExternLib_PWM.h"
-#include "STM32F10x_ExternLib_GPIO.h"
+#include "STM32F10x_ExtendLib_PWM.h"
+#include "STM32F10x_ExtendLib_GPIO.h"
 #include "MemoryManage.h"
 #include "stddef.h"
 
@@ -63,7 +63,7 @@ PWM_Object PWM_Initialize(TIM_Object TIM_Periph, uint8_t TIM_Channel_x,GPIO_Obje
     TIM_ARRPreloadConfig(TIM_Periph->TIMx, ENABLE);
     TIM_Cmd(TIM_Periph->TIMx, ENABLE);
     
-    PWM_Object newPWMObj = (PWM_Object)MeM_Request(sizeof(struct PWM_TypeDef));
+    PWM_Object newPWMObj = (PWM_Object)MeM_Request(sizeof(struct PWM_Object_TypeDef));
     newPWMObj->TIM_Periph = TIM_Periph;
     newPWMObj->TIM_Channel = TIM_Channel_x;
     return newPWMObj;

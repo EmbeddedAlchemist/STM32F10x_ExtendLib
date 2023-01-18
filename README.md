@@ -44,7 +44,7 @@
   - [TODO] I2C | 内部集成电路
     - Hardware I2C | 硬件I2C
     - Software I2C | 软件I2C
-  - [TODO] SPI | 串行外设接口
+  - SPI | 串行外设接口
   - [TODO] ADC | 数模转换
   - [TODO] FLASH
   - [TODO] NVIC
@@ -55,7 +55,7 @@
   - [TODO…] MPU6050 | 6轴加速度传感器
 - **软件和算法**
   - Memory Manage | 内存管理
-  - 三角函数表
+    - 三角函			数表
   - [TODO] “EVENT” | “事件”
   - [TODO] PID
   - [TODO] 矩阵运算
@@ -101,13 +101,21 @@
 
 ## 命名规范、类型和常量定义
 
+### 类型定义
+
 - 定义`void*`类型为**通用对象类型**`GenericObject`。
 
   任何对象都可以转换为通用对象，通用对象也可以转换为任何对象。
 
+- 定义`char*`类型为**字节缓冲**`ByteBuffer`.
+
+- 定义`void (*)(GenericObject)`类型为**回调函数指针**`CallbackFunc`.
+
+### 常量定义
+
 - 定义`(GenericObject)0`为**空对象常量**`EmptyObject`，类型为通用对象，相当于`NULL`
 
-
+### 命名规范
 
 - 所有类型和函数都以其外设或硬件的名称开头，例如`GPIO_xxx`。
 
@@ -145,10 +153,40 @@
 ## 注意事项
 
 - 本库基本与标准库兼容，所以在一般情况下，标准库和扩展库可以混合使用。但是，如果已经使用扩展库为一个外设生成了对象，而且扩展库提供了提供了所需功能，则不应该继续使用标准库初始化和操作该外设；操作对象时，对于扩展库没有提供的功能，可以使用标准库替代，但是如果扩展库提供了类似的功能，则应尽量使用扩展库，否则可能出现意料之外的错误。
-
 - 由于没有出现需要销毁对象的场景，所有暂时还没有提供有效的销毁对象的方法，如果真的要销毁对象，可以调用`DistoryObject(GenericObject object)`函数，但是要保证该对象下的子对象都被正确销毁，**否则会导致内存泄漏**。
-
 - 对象生成的数量是无上限的，而外设的数目是有限的。一般来说，**一个外设对应一个对象**，如果为一个外设生成多个对象，将出现意料之外的问题。
+
+
+
+## 库函数部署
+
+1.	将`./src`下的所有文件添加至工程文件中:
+
+- `./src/Periph`下的文件是外设驱动，建议全部包含。
+- `./src/Hardware`下的文件是常用硬件的驱动，可以按需删除(不删除也不要紧，反正编译器会优化掉)。
+- `./src/Software`下的文件为软件算法，建议全部包含。至少包含`MemoryManage.c` `MemoryManage.h` `Event.c` `Event.h`，部分硬件驱动可能用到其他文件。
+
+2. 在主函数前引用`STM32F10x_ExternLib.h`
+3. 在主函数第一行(至少是扩展库函数被调用之前)插入`STM32F10x_ExternLib_Initialize();`，完成扩展库初始化。
+4. 在主循环中(一般是第一行)插入`STM32F10x_ExternLib_MainLoopHandler();`。
+
+e.g.
+
+~~~C
+//main.c
+#include "STM32F10x_ExternLib.h"
+
+void main(){
+    //init
+    STM32F10x_ExternLib_Initialize();
+    for(;;){
+        //Main Loop
+        STM32F10x_ExternLib_MainLoopHandler();
+    }
+}
+~~~
+
+
 
 
 
@@ -860,6 +898,12 @@ uint16_t PWM_GetActualDuty(PWM_Object PWM);
 ​	其实这玩意根本没必要做成对象，基本初始化一次就废的玩意，但是为了代码风格同一…
 
 
+
+## SPI | 串行外设接口
+
+### 硬件抽象层示意
+
+![spiStruct.drawio](README.assets/spiStruct.drawio.svg)
 
 
 

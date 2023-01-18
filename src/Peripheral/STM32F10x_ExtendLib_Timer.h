@@ -1,9 +1,10 @@
-#ifndef _STM32F10X_EXTERN_LIB_TIMER_H_
-#define _STM32F10X_EXTERN_LIB_TIMER_H_
+#ifndef _STM32F10X_EXTEND_LIB_TIMER_H_
+#define _STM32F10X_EXTEND_LIB_TIMER_H_
 
-#include "STM32F10x_ExternLib.h"
+#include "stm32f10x.h"
+#include "ExtendLibDefinition.h"
 
-typedef struct TIM_PeriphTypeDef{
+typedef struct TIM_Object_TypeDef{
     TIM_TypeDef *TIMx;
     uint8_t IRQn_Channel;
     void (*interruptUpdateCallback)(GenericObject);//回调函数
